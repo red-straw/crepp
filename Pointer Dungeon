@@ -1,0 +1,185 @@
+#include "raylib.h"
+#include <stdio.h>
+
+#define SCREEN_WIDTH 1000
+#define SCREEN_HEIGHT 600
+
+typedef struct {
+    const char* question;
+    const char* choices[4];
+    int answer;
+} Quiz;
+
+int main(void)
+{
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "C Learning Game");
+    SetTargetFPS(60);
+
+    Rectangle player = { 100, 250, 40, 40 };
+    Rectangle quizBox = { 700, 250, 80, 80 };
+
+    Quiz quizzes[] = {
+        {
+            "int a = 5; printf(\"%d\", a);",
+            {"5", "0", "1", "Error"},
+            0
+        },
+        {
+            "int x=10; int *p=&x; *p=?",
+            {"0", "10", "&x", "Error"},
+            1
+        },
+        {
+            "int arr[3]={1,2,3}; arr[1]?",
+            {"1", "2", "3", "0"},
+            1
+        }
+    };
+
+    int totalQuiz = 3;
+    int currentQuiz = 0;
+
+    int score = 0;
+    int hp = 3;
+
+    bool showQuiz = false;
+    bool gameClear = false;
+    bool gameOver = false;
+
+    while (!WindowShouldClose())
+    {
+        if (!showQuiz && !gameClear && !gameOver)
+        {
+            if (IsKeyDown(KEY_W)) player.y -= 4;
+            if (IsKeyDown(KEY_S)) player.y += 4;
+            if (IsKeyDown(KEY_A)) player.x -= 4;
+            if (IsKeyDown(KEY_D)) player.x += 4;
+
+            if (CheckCollisionRecs(player, quizBox))
+            {
+                showQuiz = true;
+            }
+        }
+
+        if (showQuiz)
+        {
+            int choice = -1;
+
+            if (IsKeyPressed(KEY_ONE)) choice = 0;
+            if (IsKeyPressed(KEY_TWO)) choice = 1;
+            if (IsKeyPressed(KEY_THREE)) choice = 2;
+            if (IsKeyPressed(KEY_FOUR)) choice = 3;
+
+            if (choice != -1)
+            {
+                if (choice == quizzes[currentQuiz].answer)
+                    score++;
+                else
+                    hp--;
+
+                currentQuiz++;
+
+                if (hp <= 0)
+                {
+                    gameOver = true;
+                    showQuiz = false;
+                }
+                else if (currentQuiz >= totalQuiz)
+                {
+                    gameClear = true;
+                    showQuiz = false;
+                }
+                else
+                {
+                    player.x = 100;
+                    player.y = 250;
+                    showQuiz = false;
+                }
+            }
+        }
+
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        if (!gameClear && !gameOver)
+        {
+            DrawRectangleRec(player, BLUE);
+            DrawRectangleRec(quizBox, GREEN);
+
+            DrawText("WASD Move", 20, 20, 25, BLACK);
+            DrawText(TextFormat("Score: %d", score), 20, 60, 25, BLACK);
+            DrawText(TextFormat("HP: %d", hp), 20, 100, 25, BLACK);
+
+            if (!showQuiz)
+            {
+                DrawText(
+                    "Go to the GREEN box to solve a C question",
+                    250,
+                    50,
+                    25,
+                    DARKGRAY
+                );
+            }
+        }
+
+        if (showQuiz)
+        {
+            DrawRectangle(100, 100, 800, 350, LIGHTGRAY);
+
+            Quiz q = quizzes[currentQuiz];
+
+            DrawText(q.question, 120, 130, 25, BLACK);
+
+            DrawText(TextFormat("1. %s", q.choices[0]), 120, 200, 25, BLUE);
+            DrawText(TextFormat("2. %s", q.choices[1]), 120, 250, 25, BLUE);
+            DrawText(TextFormat("3. %s", q.choices[2]), 120, 300, 25, BLUE);
+            DrawText(TextFormat("4. %s", q.choices[3]), 120, 350, 25, BLUE);
+
+            DrawText("Press 1~4", 120, 400, 25, RED);
+        }
+
+        if (gameClear)
+        {
+            DrawText(
+                "GAME CLEAR!",
+                320,
+                220,
+                60,
+                GREEN
+            );
+
+            DrawText(
+                TextFormat("Final Score: %d / %d", score, totalQuiz),
+                320,
+                320,
+                40,
+                BLACK
+            );
+        }
+
+        if (gameOver)
+        {
+            DrawText(
+                "GAME OVER",
+                320,
+                220,
+                60,
+                RED
+            );
+
+            DrawText(
+                TextFormat("Score: %d", score),
+                400,
+                320,
+                40,
+                BLACK
+            );
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
